@@ -7,4 +7,4 @@
 
 ###Examples
 
-See  https://github.com/jmechnich/python-presence/tree/master/examples
+See [examples directory](https://github.com/jmechnich/python-presence/tree/master/examples)
