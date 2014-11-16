@@ -3,15 +3,27 @@
 from presence.presence import Presence
 from presence.bot      import PresenceBot
 
+import logging
+
 def main():
-    p = PresenceBot()
+    logger = logging.getLogger('presence-minimal')
+    logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s]  %(message)s")
+
+    # logging to console
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
+    
+    logger.setLevel( logging.DEBUG)
+    
+    p = PresenceBot(logger=logger)
     p.listen()
     
     try:
         while True:
             p.wait_for_connect()
     except KeyboardInterrupt:
-        print "KeyboardInterrupt"
+        logger.info("Interrupted by user")
     
     p.cleanup()
 
