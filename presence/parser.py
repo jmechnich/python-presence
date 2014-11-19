@@ -69,9 +69,6 @@ class Parser(object):
                 self.set_mode(self.FILE_OOB)
                 self.current = Transfer_OOB(
                     self,identity=self.current.identity,other=self.current.identity)
-            #elif xmlns == 'jabber:x:event':
-            #    self.current = None
-            #    self.mode    = self.IDLE
         elif name == 'url':
             if self.mode == self.FILE_OOB and attrs['type'] == 'file':
                 self.current.filename = ""

@@ -17,14 +17,14 @@ class ClientThread(threading.Thread):
     def default_commands(self):
         return {
             'echo': self.make_command(
-                func=staticmethod(lambda client, message: self.echo(message)),
+                func=staticmethod(lambda client, message: client.echo(message)),
                 helptext="echo text",
                 greedy=True),
             'help': self.make_command(
-                func=staticmethod(lambda client, message: self.help()),
+                func=staticmethod(lambda client, message: client.help()),
                 helptext="print this help"),
             'hello': self.make_command(
-                func=staticmethod(lambda client, message: self.hello()),
+                func=staticmethod(lambda client, message: client.hello()),
                 helptext="print a hello message"),
             }
     
