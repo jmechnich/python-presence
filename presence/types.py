@@ -1,5 +1,6 @@
 import socket, os, hashlib, tempfile, shutil, urllib2
 
+# parser result type
 _types = ['STREAM_OPEN', 'STREAM_CLOSE', 'MESSAGE', 'FILE_TRANSFER', 'FEATURE_NEG']
 ResultType = type('ResultType', (object,), { t: i for i,t in enumerate(_types)})
 del _types
@@ -26,12 +27,14 @@ class Result(object):
         self.type = type
         self.data = data
 
+# protocols
 class Protocol:
     BYTESTREAMS = 'http://jabber.org/protocol/bytestreams'
     FEATURE_NEG = 'http://jabber.org/protocol/feature-neg'
     SI          = 'http://jabber.org/protocol/si' 
     SI_TRANSFER = os.path.join(SI, 'profile/file-transfer')
 
+# IQ stanza properties
 class IQ(object):
     def __init__(self, identity, other, id, type):
         super(IQ,self).__init__()
@@ -40,12 +43,14 @@ class IQ(object):
         self.id       = id
         self.type     = type
         
+# Stream stanza properties
 class Stream(object):
     def __init__(self, identity, other):
         super(Stream,self).__init__()
         self.identity = identity
         self.other    = other
         
+# text/html message
 class Message(object):
     def __init__(self, html='', ascii='', identity=None, other=None):
         super(Message,self).__init__()
@@ -54,12 +59,14 @@ class Message(object):
         self.identity = identity
         self.other    = other
 
+# feature negotiation
 class FeatureNeg(object):
     def __init__(self, iq_id):
         super(FeatureNeg,self).__init__()
         self.iq_id = iq_id
         self.option_values = []
-        
+
+# file transfer
 class Transfer(object):
     def __init__(self, parent, **kwargs):
         super(Transfer,self).__init__()
@@ -88,6 +95,7 @@ class Transfer(object):
                 status = False
         return status
 
+# SOCKS5 transfer
 class Transfer_SOCKS5(Transfer):
     def __init__(self, parent, **kwargs):
         self._add_vars(['iq_id', 'sid', 'streamhosts' ])
@@ -203,7 +211,7 @@ class Transfer_SOCKS5(Transfer):
         except socket.error, e:
             self.logger.debug("%s" % str(e))
         return False
-
+# out-of-band data transfer
 class Transfer_OOB(Transfer):
     def __init__(self,parent, **kwargs):
         super(Transfer_OOB,self).__init__(parent, **kwargs)

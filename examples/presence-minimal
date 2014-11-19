@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from presence.bot    import PresenceBot
+from presence.server import PresenceServer
 
 import logging
 
@@ -12,18 +12,20 @@ def main():
     consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
-    
     logger.setLevel( logging.DEBUG)
     
-    p = PresenceBot(logger=logger)
+    # create server and listen on default socket 5298
+    p = PresenceServer(logger=logger)
     p.listen()
     
+    # wait for client to connect
     try:
         while True:
             p.wait_for_connect()
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
     
+    # close client connections and server socket
     p.cleanup()
 
 if __name__ == '__main__':

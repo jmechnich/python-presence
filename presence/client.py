@@ -14,20 +14,6 @@ class ClientThread(threading.Thread):
         d = { 'func': func, 'help': helptext, 'greedy': greedy }
         return type('Command', (object,), d)
 
-    def default_commands(self):
-        return {
-            'echo': self.make_command(
-                func=staticmethod(lambda client, message: client.echo(message)),
-                helptext="echo text",
-                greedy=True),
-            'help': self.make_command(
-                func=staticmethod(lambda client, message: client.help()),
-                helptext="print this help"),
-            'hello': self.make_command(
-                func=staticmethod(lambda client, message: client.hello()),
-                helptext="print a hello message"),
-            }
-    
     def __init__(self, sock, address, logger=logging.getLogger(), args={}):
         super(ClientThread,self).__init__()
         self.logger = logger
@@ -38,35 +24,12 @@ class ClientThread(threading.Thread):
         self.other       = self.args.get('other', None)
         self.downloaddir = self.args.get('downloaddir', os.environ['HOME'])
         self.commands    = self.args.get('commands', {})
-        self.commands.update(self.default_commands())
+        self.commands.update(self._default_commands())
         
         self.parser  = Parser(logger=self.logger)
         self.stopped = threading.Event()
         self.cleanup_func   = None
         self.broadcast_func = None
-
-    def _command_text(self):
-        ret = '<b>commands:</b><br/>'
-        for k, v in self.commands.items():
-            ret += '  %s - %s<br/>'% (k, v.help)
-        return ret
-
-    
-    def _send_si_result(self, iq_id):
-        line = ''.join([
-                "<iq type='result' from='%s' to='%s' id='%s'>" %(self.identity,self.other,iq_id),
-                "<si xmlns='http://jabber.org/protocol/si'>",
-                "<feature xmlns='%s'>" % Protocol.FEATURE_NEG,
-                "<x xmlns='jabber:x:data' type='submit'>",
-                "<field var='stream-method'>",
-                "<value>%s</value>" % Protocol.BYTESTREAMS,
-                "</field>",
-                "</x>",
-                    "</feature>",
-                "</si>",
-                "</iq>",
-                ])
-        self.cs.send_line(line)
 
     # public interface
     def send_ascii(self,ascii):
@@ -114,6 +77,44 @@ class ClientThread(threading.Thread):
 
     def hello(self):
         self.send_html('Welcome at <b>%s</b><br/>%s' % (self.identity,self._command_text()))
+
+    # internal functions
+    def _default_commands(self):
+        return {
+            'echo': self.make_command(
+                func=staticmethod(lambda client, message: client.echo(message)),
+                helptext="echo text",
+                greedy=True),
+            'help': self.make_command(
+                func=staticmethod(lambda client, message: client.help()),
+                helptext="print this help"),
+            'hello': self.make_command(
+                func=staticmethod(lambda client, message: client.hello()),
+                helptext="print a hello message"),
+            }
+    
+    def _command_text(self):
+        ret = '<b>commands:</b><br/>'
+        for k, v in self.commands.items():
+            ret += '  %s - %s<br/>'% (k, v.help)
+        return ret
+
+    
+    def _send_si_result(self, iq_id):
+        line = ''.join([
+                "<iq type='result' from='%s' to='%s' id='%s'>" %(self.identity,self.other,iq_id),
+                "<si xmlns='http://jabber.org/protocol/si'>",
+                "<feature xmlns='%s'>" % Protocol.FEATURE_NEG,
+                "<x xmlns='jabber:x:data' type='submit'>",
+                "<field var='stream-method'>",
+                "<value>%s</value>" % Protocol.BYTESTREAMS,
+                "</field>",
+                "</x>",
+                    "</feature>",
+                "</si>",
+                "</iq>",
+                ])
+        self.cs.send_line(line)
 
     # handlers for parser results
     def handle_message(self, message):

@@ -1,5 +1,6 @@
 import logging, socket
 
+# client socket wrapper
 class ClientSocket(object):
     def __init__(self, sock, address, logger=logging.getLogger()):
         super(ClientSocket,self).__init__()
