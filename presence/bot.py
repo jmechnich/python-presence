@@ -1,7 +1,7 @@
 import socket, threading, logging
 
-from presence.client import ClientThread
-from presence.types  import Message
+from client import ClientThread
+from types  import Message
 
 class PresenceBot(object):
     def __init__(self, address='', port=5298, logger=None):

@@ -2,7 +2,7 @@ import logging, cgi
 
 import xml.parsers.expat
 
-from presence.types import *
+from types import *
 
 class Parser(object):
     def __init__(self,logger=logging.getLogger()):

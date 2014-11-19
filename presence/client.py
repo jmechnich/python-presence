@@ -2,9 +2,9 @@ import socket, threading, cgi, logging, re, os
 
 import xml.etree.ElementTree
 
-from presence.parser import Parser
-from presence.sock   import ClientSocket
-from presence.types  import *
+from parser import Parser
+from sock   import ClientSocket
+from types  import *
 
 class ClientThread(threading.Thread):
     @staticmethod
