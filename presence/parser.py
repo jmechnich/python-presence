@@ -43,7 +43,7 @@ class Parser(object):
     def next(self):
         if not len(self.results):
             return None
-        return self.results.pop()
+        return self.results.pop(0)
 
     # internal helper functions
     def _set_mode(self,mode):
@@ -55,12 +55,15 @@ class Parser(object):
             self.logger.error("Wrong mode")
         
     def _add_html_start_element(self, name, attrs):
-        self.logger.debug("HTML start elem %s %s" %(name,attrs))
         self.current.html += '<%s' % name
         for a in attrs.items():
             self.current.html += ' %s="%s"' % a
         self.current.html += '>'
     
+    def _add_result(self,result):
+        self.logger.debug("Adding parser result %s" % ResultTypeStr[result.type])
+        self.results.append(result)
+        
     # expat parser callback functions
     def _start_element(self, name, attrs):
         ignore = []
@@ -73,7 +76,7 @@ class Parser(object):
         elif name == 'stream:stream':
             stream = Stream(identity=attrs['to'],other=attrs['from'])
             result = Result(type=ResultType.STREAM_OPEN,data=stream)
-            self.results.append(result)
+            self._add_result(result)
         elif name == 'message':
             self._check_mode(self.IDLE)
             self._set_mode(self.MESSAGE)
@@ -152,11 +155,11 @@ class Parser(object):
             pass
         elif name == 'stream:stream':
             result = Result(type=ResultType.STREAM_CLOSE,data=None)
-            self.results.append(result)
+            self._add_result(result)
         elif name == 'message':
             if self.mode == self.MESSAGE:
                 result = Result(type=ResultType.MESSAGE,data=self.current)
-                self.results.append(result)
+                self._add_result(result)
                 self.current = None
                 self._set_mode(self.IDLE)
         elif name == 'html':
@@ -169,7 +172,7 @@ class Parser(object):
         elif name == 'x':
             if self.mode == self.FILE_OOB:
                 result = Result(type=ResultType.FILE_TRANSFER,data=self.current)
-                self.results.append(result)
+                self._add_result(result)
                 self.current = None
                 self._set_mode(self.IDLE)
         elif name == 'iq':
@@ -177,7 +180,7 @@ class Parser(object):
         elif name == 'feature':
             self._check_mode(self.FEATURE_NEG)
             result = Result(type=ResultType.FEATURE_NEG,data=self.current)
-            self.results.append(result)
+            self._add_result(result)
             self.current = None
             self._set_mode(self.IDLE)
         elif name == 'option':
@@ -187,7 +190,7 @@ class Parser(object):
         elif name == 'query':
             if self.mode == self.FILE_SOCKS5:
                 result = Result(type=ResultType.FILE_TRANSFER,data=self.current)
-                self.results.append(result)
+                self._add_result(result)
                 self.current = None
                 self._set_mode(self.IDLE)
         else:

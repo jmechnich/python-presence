@@ -31,6 +31,8 @@ class ClientThread(threading.Thread):
         self.cleanup_func   = None
         self.broadcast_func = None
 
+        self.stream_is_open = False
+        
     # public interface
     def send_ascii(self,ascii):
         asciitext = cgi.escape(ascii.strip()).encode('ascii', 'xmlcharrefreplace')
@@ -41,6 +43,13 @@ class ClientThread(threading.Thread):
     def send_html(self,html):
         message = Message(html=html, ascii=None, identity=self.identity, other=self.other)
         self.send_message(message)
+
+    def is_empty_message(self,message):
+        ascii = message.ascii.strip()
+        html  = ''.join(xml.etree.ElementTree.fromstring('<p>%s</p>' % message.html).itertext()).strip()
+        if len(ascii) or len(html):
+            return False
+        return True
 
     def send_message(self,message):
         if message.identity != self.identity:
@@ -75,6 +84,11 @@ class ClientThread(threading.Thread):
                     self._command_text()
                     ]))
 
+    def vars(self):
+        self.send_html('<br/>'.join([
+                    self._var_text()
+                    ]))
+
     def hello(self):
         self.send_html('Welcome at <b>%s</b><br/>%s' % (self.identity,self._command_text()))
 
@@ -91,6 +105,9 @@ class ClientThread(threading.Thread):
             'hello': self.make_command(
                 func=staticmethod(lambda client, message: client.hello()),
                 helptext="print a hello message"),
+            'vars': self.make_command(
+                func=staticmethod(lambda client, message: client.vars()),
+                helptext="print variables"),
             }
     
     def _command_text(self):
@@ -99,7 +116,13 @@ class ClientThread(threading.Thread):
             ret += '  %s - %s<br/>'% (k, v.help)
         return ret
 
-    
+    def _var_text(self):
+        ret = '<b>variables:</b><br/>'
+        ret += '  identity - %s<br/>'% self.identity
+        ret += '  other - %s<br/>'% self.other
+        ret += '  downloaddir - %s<br/>'% self.downloaddir
+        return ret
+        
     def _send_si_result(self, iq_id):
         line = ''.join([
                 "<iq type='result' from='%s' to='%s' id='%s'>" %(self.identity,self.other,iq_id),
@@ -118,6 +141,9 @@ class ClientThread(threading.Thread):
 
     # handlers for parser results
     def handle_message(self, message):
+        if self.is_empty_message(message):
+            return
+        
         # check for command
         words = message.ascii.strip().split()
         command = None
@@ -137,6 +163,9 @@ class ClientThread(threading.Thread):
         status = transfer.retrieve(self.cs, self.downloaddir)
 
     def handle_stream_open(self,stream):
+        if self.stream_is_open:
+            self.logger.error('Stream already open')
+            return
         if not self.identity:
             self.identity == stream.identity
         elif self.identity != stream.identity:
@@ -156,9 +185,7 @@ class ClientThread(threading.Thread):
                 ])
         
         self.cs.send_line(line)
-
-    def handle_stream_close(self):
-        self.cs.send_line("</stream:stream>")
+        self.stream_is_open = True
 
     def handle_feature_neg(self, fn):
         for v in fn.option_values:
@@ -168,6 +195,13 @@ class ClientThread(threading.Thread):
             else:
                 self.logger.warning('Unhandled option value "%s"' % v)
 
+    def close_stream(self):
+        if not self.stream_is_open:
+            self.logger.error("Stream is not open, not closing")
+            return
+        self.cs.send_line("</stream:stream>")
+        self.stream_is_open = False
+
     # Functions related to threading/event loop
     def process_result(self, result):
         if result.type   == ResultType.STREAM_OPEN:
@@ -175,7 +209,7 @@ class ClientThread(threading.Thread):
             self.handle_stream_open(result.data)
         elif result.type == ResultType.STREAM_CLOSE:
             self.logger.debug("Handling stream close")
-            self.handle_stream_close()
+            self.close_stream()
         elif result.type   == ResultType.MESSAGE:
             self.logger.debug("Handling message")
             self.handle_message(result.data)
@@ -214,6 +248,8 @@ class ClientThread(threading.Thread):
                 self.process()
         except RuntimeError:
             pass
+        if self.stream_is_open:
+            self.close_stream()
         self.cs.close()
         if self.cleanup_func:
             self.cleanup_func(self)

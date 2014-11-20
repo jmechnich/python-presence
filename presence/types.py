@@ -1,25 +1,8 @@
 import socket, os, hashlib, tempfile, shutil, urllib2
 
 # parser result type
-_types = ['STREAM_OPEN', 'STREAM_CLOSE', 'MESSAGE', 'FILE_TRANSFER', 'FEATURE_NEG']
-ResultType = type('ResultType', (object,), { t: i for i,t in enumerate(_types)})
-del _types
-
-def _enumToStr(type,val):
-    if val == None:
-        return 'None'
-    if val < 0:
-        return ''
-    values = { v:k for k,v in type.__dict__.items() if not k.startswith('__')}
-    if val>=len(values):
-        return ''
-    return values[val]
-
-def resultTypeToStr(t):
-    return _enumToStr(ResultType,t)
-
-del _enumToStr
-
+ResultTypeStr = ['STREAM_OPEN', 'STREAM_CLOSE', 'MESSAGE', 'FILE_TRANSFER', 'FEATURE_NEG']
+ResultType    = type('ResultType', (object,), { t: i for i,t in enumerate(ResultTypeStr)})
 
 class Result(object):
     def __init__(self, type, data=None):
