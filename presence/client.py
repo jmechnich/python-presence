@@ -22,7 +22,7 @@ class ClientThread(threading.Thread):
         
         self.identity    = self.args.get('name',  socket.gethostname())
         self.other       = self.args.get('other', None)
-        self.downloaddir = self.args.get('downloaddir', os.environ['HOME'])
+        self.downloaddir = self.args.get('downloaddir', None)
         self.commands    = self.args.get('commands', {})
         self.commands.update(self._default_commands())
         
@@ -92,6 +92,31 @@ class ClientThread(threading.Thread):
     def hello(self):
         self.send_html('Welcome at <b>%s</b><br/>%s' % (self.identity,self._command_text()))
 
+    def ls_downloaddir(self):
+        d = self.downloaddir
+        if not d:
+            self.send_html('Downloads disabled')
+            return
+        if not os.path.exists(d):
+            self.send_html('Download directory does not exist')
+            return
+        fill = ' '*4
+        msg = 'Contents of <b>%s</b><br/>' % d 
+        entries = os.listdir(d)
+        for entry in entries:
+            stat = os.stat(os.path.join(d,entry))
+            printname = entry
+            if os.path.isdir(entry):
+                printname = '[%s]' % printname
+            elif os.path.isfile(entry):
+                printname = '%s' % printname
+            msg += fill + ("%s\n" % printname)
+        if not len(entries):
+            msg += 'No files found'
+
+        self.send_html(msg)
+
+
     # internal functions
     def _default_commands(self):
         return {
@@ -108,6 +133,9 @@ class ClientThread(threading.Thread):
             'vars': self.make_command(
                 func=staticmethod(lambda client, message: client.vars()),
                 helptext="print variables"),
+            'ls': self.make_command(
+                func=staticmethod(lambda client, message: client.ls_downloaddir()),
+                helptext="list contents of download directory"),
             }
     
     def _command_text(self):
@@ -118,9 +146,9 @@ class ClientThread(threading.Thread):
 
     def _var_text(self):
         ret = '<b>variables:</b><br/>'
-        ret += '  identity - %s<br/>'% self.identity
-        ret += '  other - %s<br/>'% self.other
-        ret += '  downloaddir - %s<br/>'% self.downloaddir
+        ret += '  identity - %s<br/>'   % str(self.identity)
+        ret += '  other - %s<br/>'      % str(self.other)
+        ret += '  downloaddir - %s<br/>'% str(self.downloaddir)
         return ret
         
     def _send_si_result(self, iq_id):
@@ -160,6 +188,10 @@ class ClientThread(threading.Thread):
                 self.broadcast_func(self,message)
 
     def handle_transfer(self, transfer):
+        if not self.downloaddir:
+            self.logger.info("Rejecting file transfer, download directory not set")
+            transfer.reject(self.cs)
+            return
         status = transfer.retrieve(self.cs, self.downloaddir)
 
     def handle_stream_open(self,stream):

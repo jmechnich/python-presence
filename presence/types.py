@@ -96,7 +96,7 @@ class Transfer_SOCKS5(Transfer):
         return status
 
     def reject(self, cs):
-        line = ' '.join(
+        line = ' '.join([
             "<iq from='%s'" % self.identity,
             "id='%s'" % self.iq_id,
             "to='%s'" % self.other,
@@ -105,8 +105,8 @@ class Transfer_SOCKS5(Transfer):
             "<not-acceptable",
             "xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>",
             "</error>",
-            "</iq>"
-            )
+            "</iq>",
+        ])
         cs.send_line(line)
 
     def _get_file_socks5(self, streamhost, downloaddir):
@@ -194,23 +194,29 @@ class Transfer_SOCKS5(Transfer):
         except socket.error, e:
             self.logger.debug("%s" % str(e))
         return False
+
 # out-of-band data transfer
 class Transfer_OOB(Transfer):
     def __init__(self,parent, **kwargs):
         super(Transfer_OOB,self).__init__(parent, **kwargs)
+        # optional variable iq_id to differentiate between iq and x OOB
+        self.__dict__['iq_id'] = ''
         
     def retrieve(self, clientsocket, downloaddir):
         if not self._is_valid():
             return False
         status = self._get_file_oob(downloaddir)
-        #if status:
-        #    self._send_oob_success(clientsocket)
-        #else:
-        #    self._send_oob_failure(clientsocket,404)
+        if len(self.iq_id):
+            if status:
+                self._send_iq_oob_success(clientsocket)
+            else:
+                self._send_iq_oob_failure(clientsocket,404)
         return status
     
     def reject(self,clientsocket):
-        self._send_oob_failure(clientsocket,406)
+        # can't reject x OOB?
+        if len(self.iq_id):
+            self._send_iq_oob_failure(clientsocket,406)
         
     def _get_file_oob(self, downloaddir):
         self.logger.debug('retrieving file %s, size %s bytes' %(self.filename, self.filesize))
@@ -237,7 +243,7 @@ class Transfer_OOB(Transfer):
         os.remove(fpath)
         return True
 
-    def _send_msg_oob_success(self, cs):
+    def _send_iq_oob_success(self, cs):
         msg = ' '.join([
                 "<iq type='result'",
                 "from='%s'" % self.identity,
@@ -246,7 +252,7 @@ class Transfer_OOB(Transfer):
                 ])
         cs.send(msg)
     
-    def _send_msg_oob_failure(self,cs,errorcode):
+    def _send_iq_oob_failure(self,cs,errorcode):
         msg = ' '.join([
                 "<iq type='error'",
                 "from='%s'" % self.identity,
