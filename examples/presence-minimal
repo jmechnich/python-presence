@@ -1,32 +1,6 @@
 #!/usr/bin/env python
 
-from presence.server import PresenceServer
-
-import logging
-
-def main():
-    logger = logging.getLogger('presence-minimal')
-    logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s")
-
-    # logging to console
-    consoleHandler = logging.StreamHandler()
-    consoleHandler.setFormatter(logFormatter)
-    logger.addHandler(consoleHandler)
-    logger.setLevel( logging.DEBUG)
-    
-    # create server and listen on default socket 5298
-    p = PresenceServer(logger=logger)
-    p.listen()
-    
-    # wait for client to connect
-    try:
-        while True:
-            p.wait_for_connect()
-    except KeyboardInterrupt:
-        logger.info("Interrupted by user")
-    
-    # close client connections and server socket
-    p.cleanup()
+from presence.main import main
 
 if __name__ == '__main__':
-    main()
+    main('presence-minimal')
