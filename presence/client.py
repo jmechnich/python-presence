@@ -20,7 +20,7 @@ class ClientThread(threading.Thread):
         self.cs     = ClientSocket(sock,address,logger=self.logger)
         self.args   = dict(args)
         
-        self.identity    = self.args.get('name',  socket.gethostname())
+        self.identity    = self.args.get('name',  socket.gethostname()+'.local')
         self.other       = self.args.get('other', None)
         self.downloaddir = self.args.get('downloaddir', None)
         self.commands    = self.args.get('commands', {})
@@ -140,7 +140,7 @@ class ClientThread(threading.Thread):
     
     def _command_text(self):
         ret = '<b>commands:</b><br/>'
-        for k, v in self.commands.items():
+        for k, v in sorted(self.commands.items()):
             ret += '  %s - %s<br/>'% (k, v.help)
         return ret
 
