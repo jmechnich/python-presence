@@ -50,12 +50,17 @@ def main(name, client_args={}):
         lock = '/var/run/%s' % name
     else:
         lock = os.path.join(os.environ['HOME'],'.%s' % name)
-        
-    if args.kill:
-        if os.path.exists(lock+'.lock'):
-            pidfile = open(lock+'.lock','r')
+
+    pid = -1
+    if os.path.exists(lock+'.lock'):
+        with open(lock+'.lock','r') as pidfile:
             pid = int(pidfile.readline().strip())
-            pidfile.close()
+    if pid != -1 and not psutil.pid_exists(pid):
+        os.remove(lock+'.lock')
+        pid = -1
+
+    if pid != -1:
+        if args.kill:
             try:
                 print "Sending SIGTERM to", pid
                 os.kill(pid,signal.SIGTERM)
@@ -78,10 +83,10 @@ def main(name, client_args={}):
                 else:
                     print e
                     sys.exit(1)
-    else:
-        if os.path.exists(lock+'.lock'):
-            print "Process already running (lockfile exists), exiting"
-            sys.exit(1)
+        else:
+            if os.path.exists(lock+'.lock'):
+                print "Process already running (lockfile exists), exiting"
+                sys.exit(1)
         
     if args.daemon:
         with DaemonContext(umask=0o002, pidfile=lockfile.FileLock(lock)):
