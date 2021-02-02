@@ -235,7 +235,7 @@ class Transfer_OOB(Transfer):
     def _get_file_oob(self, downloaddir):
         self.logger.debug('retrieving file %s, size %s bytes' %(self.filename, self.filesize))
         fd, fpath = tempfile.mkstemp()
-        f = os.fdopen(fd, "w")
+        f = os.fdopen(fd, "wb")
         self.logger.debug('Writing to "%s"'% fpath)
         bytesread = 0
         filesize = int(self.filesize)

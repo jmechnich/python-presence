@@ -1,4 +1,4 @@
-import cgi
+import html
 import logging
 import re
 import os
@@ -40,7 +40,7 @@ class ClientThread(threading.Thread):
         
     # public interface
     def send_ascii(self,ascii):
-        asciitext = cgi.escape(ascii.strip()).encode('ascii', 'xmlcharrefreplace')
+        asciitext = html.escape(ascii.strip())
         htmltext = re.sub(r'\n', r'<br/>', asciitext)
         message = Message(html=htmltext, ascii=asciitext, identity=self.identity, other=self.other)
         self.send_message(message)
@@ -66,7 +66,7 @@ class ClientThread(threading.Thread):
             message.ascii = ''.join(xml.etree.ElementTree.fromstring('<p>%s</p>' % message.ascii).itertext())
         message.ascii = message.ascii.strip()
         if len(message.ascii):
-            message.ascii = cgi.escape(message.ascii).encode('ascii', 'xmlcharrefreplace')
+            message.ascii = html.escape(message.ascii)
             message.ascii = '\n' + message.ascii
         msg = [
             "<message",

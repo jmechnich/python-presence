@@ -21,11 +21,12 @@ class ClientSocket(object):
 
     def send(self, msg):
         totalsent = 0
-        while totalsent < len(msg):
-            sent = self.sock.send(msg[totalsent:])
+        bmsg = msg.encode()
+        while totalsent < len(bmsg):
+            sent = self.sock.send(bmsg[totalsent:])
             if sent == 0:
                 raise RuntimeError("socket connection broken")
-            self.logger.debug('WRITE %s' % repr(msg[totalsent:totalsent+sent]))
+            self.logger.debug('WRITE %s' % repr(bmsg[totalsent:totalsent+sent]))
             totalsent = totalsent + sent
 
     def recv(self):

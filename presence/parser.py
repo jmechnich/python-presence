@@ -1,4 +1,4 @@
-import cgi
+import html
 import logging
 
 import xml.parsers.expat
@@ -151,7 +151,7 @@ class Parser(object):
                 self.flags &= ~self.BODY
         elif self.flags & self.HTMLBODY:
             self._check_mode(self.MESSAGE)
-            self.current.html += "</%s>" % name
+            self.current.html += '</%s>' % name
         elif name in (ignore + self.ignore):
             pass
         elif name == 'stream:stream':
@@ -200,9 +200,9 @@ class Parser(object):
     def _char_data(self, data):
         if self.mode == self.MESSAGE:
             if self.flags & (self.HTMLBODY):
-                self.current.html += cgi.escape(data).encode('ascii', 'xmlcharrefreplace')
+                self.current.html += html.escape(data, quote=False)
             else:
-                self.current.ascii += data #cgi.escape(data).encode('ascii', 'xmlcharrefreplace')
+                self.current.ascii += data
         elif self.mode == self.FEATURE_NEG:
             if self.flags & self.OPTION and self.flags & self.VALUE:
                 self.current.option_values.append(data)

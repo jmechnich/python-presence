@@ -69,7 +69,7 @@ class PresenceServer(object):
         self.logger.info("Starting client thread %s:%d" % address)
         commands = self._server_commands()
         args = dict(client_args)
-        if args.has_key('commands'):
+        if 'commands' in args:
             args['commands'].update(commands)
         else:
             args['commands'] = commands
