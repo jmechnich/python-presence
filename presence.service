@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+<name replace-wildcards="yes">%h.local</name>
+<service>
+<type>_presence._tcp</type>
+<port>5298</port>
+<txt-record>hash=sha-1</txt-record>
+<!-- See https://xmpp.org/registrar/linklocal.html -->
+<!--
+<txt-record>msg=...</txt-record>
+<txt-record>1st=...</txt-record>
+<txt-record>phsh=...</txt-record>
+-->
+</service>
+</service-group>
