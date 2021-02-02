@@ -14,9 +14,9 @@ setup(
     long_description_content_type="text/markdown",
     url ='https://github.com/jmechnich/python-presence',
     packages=['presence'],
-    scripts=['examples/presence-minimal'],
+    scripts=['python-presence'],
     use_scm_version={"local_scheme": "no-local-version"},
     setup_requires=['setuptools_scm'],
-    install_requires=["python-daemon"],
+    install_requires=["lockfile", "psutil", "python-daemon"],
     python_requires='>=3.6',
 )

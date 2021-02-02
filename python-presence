@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+from presence.main import main
+
+if __name__ == '__main__':
+    main(
+        name=os.path.basename(sys.argv[0]),
+        client_args={
+            # set this to enable file transfers
+            'downloaddir': None,
+            # user-defined client commands
+            'commands': {},
+         })
