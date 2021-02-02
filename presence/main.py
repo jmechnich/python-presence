@@ -1,12 +1,21 @@
-from server import PresenceServer
-
-import argparse, lockfile, logging, os, signal, sys, psutil, time
+import argparse
+import lockfile
+import logging
+import os
+import signal
+import sys
+import psutil
+import time
 
 from daemon import DaemonContext
 
+from .server import PresenceServer
+
 def _main(name, daemon, loglevel, client_args):
     logger = logging.getLogger(name)
-    logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s")
+    logFormatter = logging.Formatter(
+        "%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s"
+    )
     logger.setLevel( loglevel)
     
     if not daemon:
@@ -62,37 +71,34 @@ def main(name, client_args={}):
     if pid != -1:
         if args.kill:
             try:
-                print "Sending SIGTERM to", pid
+                print("Sending SIGTERM to", pid)
                 os.kill(pid,signal.SIGTERM)
                 retries = 5
                 while psutil.pid_exists(pid) and retries:
                     retries -= 1
                     time.sleep(1)
                 if psutil.pid_exists(pid):
-                    print "Sending SIGKILL to", pid
+                    print("Sending SIGKILL to", pid)
                     os.kill(pid,signal.SIGKILL)
                     time.sleep(1)
                 if psutil.pid_exists(pid):
-                    print "Could not kill", pid
-                    print "Kill manually"
+                    print("Could not kill", pid)
+                    print("Kill manually")
                     sys.exit(1)
-            except OSError, e:
+            except OSError as e:
                 if args.force:
-                    print "Error stopping running instance, forcing start"
+                    print("Error stopping running instance, forcing start")
                     os.remove(lock+".lock")
                 else:
-                    print e
+                    print(e)
                     sys.exit(1)
         else:
             if os.path.exists(lock+'.lock'):
-                print "Process already running (lockfile exists), exiting"
+                print("Process already running (lockfile exists), exiting")
                 sys.exit(1)
         
     if args.daemon:
         with DaemonContext(umask=0o002, pidfile=lockfile.FileLock(lock)):
-            pidfile = open(lock+'.lock', 'w')
-            print>>pidfile, os.getpid()
-            pidfile.close()
-            _main(name, args.daemon, loglevel, client_args)
-    else:
-            _main(name, args.daemon, loglevel, client_args)
+            with open(lock+'.lock', 'w') as pidfile:
+                print(os.getpid(), file=pidfile)
+    _main(name, args.daemon, loglevel, client_args)

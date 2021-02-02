@@ -1,7 +1,9 @@
-import socket, threading, logging
+import logging
+import socket
+import threading
 
-from client import ClientThread
-from types  import Message
+from .client import ClientThread
+from .types  import Message
 
 # main class
 class PresenceServer(object):

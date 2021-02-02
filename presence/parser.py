@@ -1,8 +1,9 @@
-import logging, cgi
+import cgi
+import logging
 
 import xml.parsers.expat
 
-from types import *
+from .types import *
 
 # xml parser
 class Parser(object):

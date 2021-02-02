@@ -1,8 +1,22 @@
-import socket, os, hashlib, tempfile, shutil, urllib2
+import hashlib
+import os
+import shutil
+import socket
+import tempfile
+from urllib.request import urlopen
 
 # parser result type
-ResultTypeStr = ['STREAM_OPEN', 'STREAM_CLOSE', 'MESSAGE', 'FILE_TRANSFER', 'FEATURE_NEG']
-ResultType    = type('ResultType', (object,), { t: i for i,t in enumerate(ResultTypeStr)})
+ResultTypeStr = [
+    'STREAM_OPEN',
+    'STREAM_CLOSE',
+    'MESSAGE',
+    'FILE_TRANSFER',
+    'FEATURE_NEG'
+]
+
+ResultType = type('ResultType', (object,), {
+    t: i for i,t in enumerate(ResultTypeStr)
+})
 
 class Result(object):
     def __init__(self, type, data=None):
@@ -191,7 +205,7 @@ class Transfer_SOCKS5(Transfer):
             shutil.copyfile(fpath,destfile)
             os.remove(fpath)
             return True
-        except socket.error, e:
+        except socket.error as e:
             self.logger.debug("%s" % str(e))
         return False
 
@@ -226,7 +240,7 @@ class Transfer_OOB(Transfer):
         bytesread = 0
         filesize = int(self.filesize)
         try:
-            infile = urllib2.urlopen(self.filename)
+            infile = urlopen(self.filename)
             while bytesread < filesize:
                 chunk = infile.read(2048)
                 if not len(chunk):

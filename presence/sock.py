@@ -1,4 +1,5 @@
-import logging, socket
+import logging
+import socket
 
 # client socket wrapper
 class ClientSocket(object):

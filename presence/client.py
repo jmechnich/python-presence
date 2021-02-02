@@ -1,10 +1,15 @@
-import socket, threading, cgi, logging, re, os
+import cgi
+import logging
+import re
+import os
+import socket
+import threading
 
 import xml.etree.ElementTree
 
-from parser import Parser
-from sock   import ClientSocket
-from types  import *
+from .parser import Parser
+from .sock   import ClientSocket
+from .types  import *
 
 class ClientThread(threading.Thread):
     @staticmethod
@@ -265,10 +270,10 @@ class ClientThread(threading.Thread):
         try:
             while self.parser.process(chunk):
                 chunk = self.cs.recv()
-        except socket.timeout, e:
+        except socket.timeout as e:
             #self.logger.debug('socket.timeout %s' % str(e))
             return False
-        except socket.error, e:
+        except socket.error as e:
             self.logger.debug('socket.error %s' % str(e))
             return False
         return True
