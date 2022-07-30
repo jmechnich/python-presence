@@ -16,6 +16,12 @@ setup(
     url ='https://github.com/jmechnich/python-presence',
     packages=['presence'],
     scripts=['python-presence'],
+    data_files=[
+        ('share/python-presence', [
+            'misc/presence.service',
+            'misc/python-presence.service',
+        ])
+    ],
     use_scm_version={"local_scheme": "no-local-version"},
     setup_requires=['setuptools_scm'],
     install_requires=["pidfile", "psutil", "python-daemon"],
