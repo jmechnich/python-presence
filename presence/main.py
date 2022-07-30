@@ -15,19 +15,23 @@ from .server import PresenceServer
 
 def _main(name, daemon, loglevel, client_args):
     logger = logging.getLogger(name)
-    logFormatter = logging.Formatter(
-        "%(name)s[%(process)s]: [%(threadName)s] %(message)s",
-        #"%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s",
-    )
     logger.setLevel(loglevel)
     
     if not daemon:
         # logging to console
         handler = logging.StreamHandler()
+        logFormatter = logging.Formatter(
+            "[%(threadName)s] %(message)s",
+            #"%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s",
+        )
         handler.setFormatter(logFormatter)
         logger.addHandler(handler)
     else:
         handler = logging.handlers.SysLogHandler(address='/dev/log')
+        logFormatter = logging.Formatter(
+            "%(name)s[%(process)s]: [%(threadName)s] %(message)s",
+            #"%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s",
+        )
         handler.setFormatter(logFormatter)
         logger.addHandler(handler)
     
