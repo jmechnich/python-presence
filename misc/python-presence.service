@@ -1,0 +1,11 @@
+# systemd service file for python-presence
+
+[Unit]
+Description=python-presence - a minimal implementation of a serverless XMPP client
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/python-presence
+
+[Install]
+WantedBy=multi-user.target

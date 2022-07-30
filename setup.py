@@ -18,7 +18,7 @@ setup(
     scripts=['python-presence'],
     use_scm_version={"local_scheme": "no-local-version"},
     setup_requires=['setuptools_scm'],
-    install_requires=["lockfile", "psutil", "python-daemon"],
+    install_requires=["pidfile", "psutil", "python-daemon"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

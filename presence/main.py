@@ -1,11 +1,13 @@
 import argparse
-import lockfile
 import logging
+import logging.handlers
 import os
 import signal
 import sys
 import psutil
 import time
+
+from pidfile import PidFile
 
 from daemon import DaemonContext
 
@@ -14,15 +16,20 @@ from .server import PresenceServer
 def _main(name, daemon, loglevel, client_args):
     logger = logging.getLogger(name)
     logFormatter = logging.Formatter(
-        "%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s"
+        "%(name)s[%(process)s]: [%(threadName)s] %(message)s",
+        #"%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s",
     )
     logger.setLevel(loglevel)
     
     if not daemon:
         # logging to console
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(logFormatter)
-        logger.addHandler(consoleHandler)
+        handler = logging.StreamHandler()
+        handler.setFormatter(logFormatter)
+        logger.addHandler(handler)
+    else:
+        handler = logging.handlers.SysLogHandler(address='/dev/log')
+        handler.setFormatter(logFormatter)
+        logger.addHandler(handler)
     
     # create server and listen on default socket 5298
     p = PresenceServer(logger=logger)
@@ -56,16 +63,16 @@ def main(name, client_args={}):
         loglevel = logging.INFO
 
     if os.geteuid() == 0:
-        lock = f'/var/run/{name}'
+        lock = f'/var/run/{name}.lock'
     else:
-        lock = os.path.join(os.environ['HOME'],f'.{name}')
+        lock = os.path.join(os.environ['HOME'],f'.{name}.lock')
 
     pid = -1
-    if os.path.exists(lock+'.lock'):
-        with open(lock+'.lock','r') as pidfile:
+    if os.path.exists(lock):
+        with open(lock,'r') as pidfile:
             pid = int(pidfile.readline().strip())
     if pid != -1 and not psutil.pid_exists(pid):
-        os.remove(lock+'.lock')
+        os.remove(lock)
         pid = -1
 
     if pid != -1:
@@ -88,17 +95,17 @@ def main(name, client_args={}):
             except OSError as e:
                 if args.force:
                     print("Error stopping running instance, forcing start")
-                    os.remove(lock+".lock")
+                    os.remove(lock)
                 else:
                     print(e)
                     sys.exit(1)
         else:
-            if os.path.exists(lock+'.lock'):
+            if os.path.exists(lock):
                 print("Process already running (lockfile exists), exiting")
                 sys.exit(1)
-        
+
     if args.daemon:
-        with DaemonContext(umask=0o002, pidfile=lockfile.FileLock(lock)):
-            with open(lock+'.lock', 'w') as pidfile:
-                print(os.getpid(), file=pidfile)
-    _main(name, args.daemon, loglevel, client_args)
+        with DaemonContext(umask=0o002, pidfile=PidFile(lock)):
+            _main(name, args.daemon, loglevel, client_args)
+    else:
+        _main(name, args.daemon, loglevel, client_args)
