@@ -91,12 +91,13 @@ class ClientThread(threading.Thread):
         if len(message.ascii):
             message.ascii = html.escape(message.ascii)
             message.ascii = '\n' + message.ascii
-        line = f"<message from='{self.identity}' to='{self.other}' type='chat'>"
-        "<body>{message.ascii}</body>"
-        "<html xmlns='http://www.w3.org/1999/xhtml'>"
-        "<body>{message.html}</body>"
-        "</html></message>"
-        self.cs.send_line(line)
+        self.cs.send_line(
+            f"<message from='{self.identity}' to='{self.other}' type='chat'>"
+            "<body>{message.ascii}</body>"
+            "<html xmlns='http://www.w3.org/1999/xhtml'>"
+            "<body>{message.html}</body>"
+            "</html></message>"
+        )
 
     def echo(self, message):
         identity = message.identity
@@ -170,22 +171,23 @@ class ClientThread(threading.Thread):
         return ret
 
     def _var_text(self):
-        ret = '<b>variables:</b><br/>'
-        ret += f'  identity - {self.identity}<br/>'
-        ret += f'  other - {self.other}<br/>'
-        ret += f'  downloaddir - {self.downloaddir}<br/>'
+        return (f'<b>variables:</b><br/>'
+                '  identity - {self.identity}<br/>'
+                '  other - {self.other}<br/>'
+                '  downloaddir - {self.downloaddir}<br/>')
         return ret
         
     def _send_si_result(self, iq_id):
-        line = f"<iq type='result' from='{self.identity}' to='{self.other}'"
-        " id='{ip_id}'>"
-        "<si xmlns='http://jabber.org/protocol/si'>"
-        "<feature xmlns='{Protocol.FEATURE_NEG}'>"
-        "<x xmlns='jabber:x:data' type='submit'>"
-        "<field var='stream-method'>"
-        "<value>{Protocol.BYTESTREAMS}</value>"
-        "</field></x></feature></si></iq>"
-        self.cs.send_line(line)
+        self.cs.send_line(
+            f"<iq type='result' from='{self.identity}' to='{self.other}'"
+            " id='{ip_id}'>"
+            "<si xmlns='http://jabber.org/protocol/si'>"
+            "<feature xmlns='{Protocol.FEATURE_NEG}'>"
+            "<x xmlns='jabber:x:data' type='submit'>"
+            "<field var='stream-method'>"
+            "<value>{Protocol.BYTESTREAMS}</value>"
+            "</field></x></feature></si></iq>"
+        )
 
     # handlers for parser results
     def handle_message(self, message):
@@ -239,11 +241,11 @@ class ClientThread(threading.Thread):
                 ' remote "{stream.other}"'
             )
              
-        line = f"<stream:stream xmlns='jabber:client'"
-        " xmlns:stream='http://etherx.jabber.org/streams'"
-        " from='{self.identity}' to='{self.other}' version='1.0'>"
-        
-        self.cs.send_line(line)
+        self.cs.send_line(
+            f"<stream:stream xmlns='jabber:client'"
+            " xmlns:stream='http://etherx.jabber.org/streams'"
+            " from='{self.identity}' to='{self.other}' version='1.0'>"
+        )
         self.stream_is_open = True
 
     def handle_feature_neg(self, fn):

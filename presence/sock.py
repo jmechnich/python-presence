@@ -16,8 +16,7 @@ class ClientSocket(object):
         self.sock.close()
         
     def send_line(self, msg):
-        msg += '\n'
-        self.send(msg)
+        self.send(msg + '\n')
 
     def send(self, msg):
         totalsent = 0

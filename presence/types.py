@@ -112,11 +112,12 @@ class Transfer_SOCKS5(Transfer):
         return status
 
     def reject(self, cs):
-        line = f"<iq from='{self.identity}' id='{self.iq_id}' to='{self.other}'"
-        " type='error'><error type='modify'>"
-        "<not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
-        "</error></iq>"
-        cs.send_line(line)
+        cs.send_line(
+            f"<iq from='{self.identity}' id='{self.iq_id}' to='{self.other}'"
+            " type='error'><error type='modify'>"
+            "<not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
+            "</error></iq>"
+        )
 
     def _get_file_socks5(self, streamhost, downloaddir):
         self.logger.debug(f'Connecting to "{streamhost}"')
@@ -275,9 +276,10 @@ class Transfer_OOB(Transfer):
         return True
 
     def _send_iq_oob_success(self, cs):
-        msg = f"<iq type='result' from='{self.identity}' to='{self.other}'"
-        " id='{self.iq_id}'/>"
-        cs.send(msg)
+        cs.send(
+            f"<iq type='result' from='{self.identity}' to='{self.other}'"
+            " id='{self.iq_id}'/>"
+        )
     
     def _send_iq_oob_failure(self,cs,errorcode):
         if errorcode == 406:
@@ -288,9 +290,10 @@ class Transfer_OOB(Transfer):
             errortype = 'cancel'
             tag = 'item-not-found'
         
-        msg = f"<iq type='error' from='{self.identity}' to='{self.other}'"
-        " id='{self.iq_id}'/><query xmlns='jabber:iq:oob'>"
-        "<url>{self.filename}</url></query>"
-        "<error code='{errorcode}' type='{errortype}'>"
-        "<{tag} xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>"
-        cs.send(msg)
+        cs.send(
+            f"<iq type='error' from='{self.identity}' to='{self.other}'"
+            " id='{self.iq_id}'/><query xmlns='jabber:iq:oob'>"
+            "<url>{self.filename}</url></query>"
+            "<error code='{errorcode}' type='{errortype}'>"
+            "<{tag} xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>"
+        )
