@@ -12,7 +12,7 @@ class ClientSocket(object):
         self.logger = logger
         
     def close(self):
-        self.logger.info('Closing connection to %s:%d' % (self.address,self.port))
+        self.logger.info(f'Closing connection to {self.address}:{self.port}')
         self.sock.close()
         
     def send_line(self, msg):
@@ -26,12 +26,12 @@ class ClientSocket(object):
             sent = self.sock.send(bmsg[totalsent:])
             if sent == 0:
                 raise RuntimeError("socket connection broken")
-            self.logger.debug('WRITE %s' % repr(bmsg[totalsent:totalsent+sent]))
+            self.logger.debug(f'WRITE {repr(bmsg[totalsent:totalsent+sent])}')
             totalsent = totalsent + sent
 
     def recv(self):
         chunk = self.sock.recv(2048)
-        self.logger.debug('READ  %s' % repr(chunk))
+        self.logger.debug(f'READ  {repr(chunk)}')
         if chunk == '':
             raise RuntimeError("socket connection broken")
         return chunk

@@ -1,4 +1,9 @@
-**python-presence** is a minimal implementation of a serverless XMPP client.
+[![PyPI versio](https://img.shields.io/pypi/v/python-presence)](https://pypi.org/project/python-presence/)
+[![PyPi format](https://img.shields.io/pypi/format/python-presence)](https://pypi.org/project/python-presence/)
+[![PyPI license](https://img.shields.io/pypi/l/python-presence)](https://pypi.org/project/python-presence/)
+[![PyPi weekly downloads](https://img.shields.io/pypi/dw/python-presence)](https://pypi.org/project/python-presence/)
+
+## python-presence - a minimal implementation of a serverless XMPP client.
 
 ### Installation
 

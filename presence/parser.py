@@ -23,7 +23,9 @@ class Parser(object):
         self.__dict__.update(flags)
         self.flags = 0
         
-        self.modestr = [ 'IDLE', 'MESSAGE', 'FILE_OOB', 'FILE_SOCKS5', 'FEATURE_NEG' ]
+        self.modestr = [
+            'IDLE', 'MESSAGE', 'FILE_OOB', 'FILE_SOCKS5', 'FEATURE_NEG',
+        ]
         modes   = { m: i for i,m in enumerate(self.modestr) }
         self.__dict__.update(modes)
         self.mode  = self.IDLE
@@ -48,7 +50,7 @@ class Parser(object):
 
     # internal helper functions
     def _set_mode(self,mode):
-        self.logger.debug('Setting mode to "%s"' % self.modestr[mode])
+        self.logger.debug(f'Setting mode to "{self.modestr[mode]}"')
         self.mode = mode
         
     def _check_mode(self,mode):
@@ -56,13 +58,13 @@ class Parser(object):
             self.logger.error("Wrong mode")
         
     def _add_html_start_element(self, name, attrs):
-        self.current.html += '<%s' % name
-        for a in attrs.items():
-            self.current.html += ' %s="%s"' % a
+        self.current.html += f'<{name}'
+        for k,v in attrs.items():
+            self.current.html += f' {k}="{v}"'
         self.current.html += '>'
     
     def _add_result(self,result):
-        self.logger.debug("Adding parser result %s" % ResultTypeStr[result.type])
+        self.logger.debug(f"Adding parser result {ResultTypeStr[result.type]}")
         self.results.append(result)
         
     # expat parser callback functions
@@ -91,7 +93,10 @@ class Parser(object):
                 self._check_mode(self.MESSAGE)
                 self._set_mode(self.FILE_OOB)
                 self.current = Transfer_OOB(
-                    self,identity=self.current.identity,other=self.current.identity)
+                    self,
+                    identity=self.current.identity,
+                    other=self.current.identity
+                )
         elif name == 'url':
             if self.mode == self.FILE_OOB and attrs['type'] == 'file':
                 self.current.filename = ""
@@ -138,7 +143,7 @@ class Parser(object):
             port = attrs['port']
             self.current.streamhosts.append((host, port, jid))
         else:
-            self.logger.debug('Start element: %s %s' % (name, str(attrs)))
+            self.logger.debug(f'Start element: {name} {str(attrs)}')
             
     def _end_element(self, name):
         ignore = ['url', 'streamhost', 'file']
@@ -151,7 +156,7 @@ class Parser(object):
                 self.flags &= ~self.BODY
         elif self.flags & self.HTMLBODY:
             self._check_mode(self.MESSAGE)
-            self.current.html += '</%s>' % name
+            self.current.html += f'</{name}>'
         elif name in (ignore + self.ignore):
             pass
         elif name == 'stream:stream':
@@ -195,7 +200,7 @@ class Parser(object):
                 self.current = None
                 self._set_mode(self.IDLE)
         else:
-            self.logger.debug('End element: %s' % name)
+            self.logger.debug(f'End element: {name}')
         
     def _char_data(self, data):
         if self.mode == self.MESSAGE:
@@ -209,4 +214,4 @@ class Parser(object):
         elif self.mode == self.FILE_OOB:
             self.current.filename += data
         else:
-            self.logger.debug('Data: %s' % data)
+            self.logger.debug(f'Data: {data}')

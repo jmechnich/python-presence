@@ -74,7 +74,9 @@ class Transfer(object):
 
     def __setattr__(self,key, val):
         if key not in self.__dict__.keys():
-            self.logger.warning("Not setting transfer attribute '%s' to '%s'" %(key,str(val)))
+            self.logger.warning(
+                f"Not setting transfer attribute '{key}' to '{val}'"
+            )
             return
         super(Transfer,self).__setattr__(key,val)
 
@@ -88,7 +90,7 @@ class Transfer(object):
             if k.startswith("_"):
                 continue
             if v == None:
-                self.logger.error("%s not set" % k)
+                self.logger.error(f"{k} not set")
                 status = False
         return status
 
@@ -110,30 +112,25 @@ class Transfer_SOCKS5(Transfer):
         return status
 
     def reject(self, cs):
-        line = ' '.join([
-            "<iq from='%s'" % self.identity,
-            "id='%s'" % self.iq_id,
-            "to='%s'" % self.other,
-            "type='error'>",
-            "<error type='modify'>",
-            "<not-acceptable",
-            "xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>",
-            "</error>",
-            "</iq>",
-        ])
+        line = f"<iq from='{self.identity}' id='{self.iq_id}' to='{self.other}'"
+        " type='error'><error type='modify'>"
+        "<not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
+        "</error></iq>"
         cs.send_line(line)
 
     def _get_file_socks5(self, streamhost, downloaddir):
-        self.logger.debug('Connecting to "%s"' % str(streamhost))
+        self.logger.debug(f'Connecting to "{streamhost}"')
         target_jid = streamhost[2]
         try:
             sock = socket.create_connection((streamhost[0],int(streamhost[1])))
-            # start SOCKS5 handshake, send version identifier/method selection message
+            # start SOCKS5 handshake
+            # send version identifier/method selection message
             msg = bytearray([0x5, 0x0])
             sock.send(msg)
             # receive METHOD selection message from server
             servermethods = sock.recv(2)
-            if len(servermethods) == 2 and ord(servermethods[0]) == 0x5 and ord(servermethods[1]) == 0x0:
+            if len(servermethods) == 2 and ord(servermethods[0]) == 0x5 \
+               and ord(servermethods[1]) == 0x0:
                 # success
                 pass
             else:
@@ -141,26 +138,39 @@ class Transfer_SOCKS5(Transfer):
                 return False
             
             # SHA1 Hash of: (SID + Requester JID + Target JID)
-            idhash = hashlib.sha1("%s%s%s" % (self.sid,self.iq_id, target_jid))
+            idhash = hashlib.sha1(f"{self.sid}{self.iq_id}{target_jid}")
             # SOCKS5 request: VER, CMD, RSV, ATYP, DST.ADDR, DST.PORT
-            # VER = 0x05, CMD = [ CONNECT 0x01, BIND 0x02, UDP ASSOCIATE 0x03 ], RSV = 0x0
-            # ATYP = [ IPv4 address: 0x01, DOMAINNAME: 0x03, IPv6 address: 0x04 ]
+            # VER = 0x05,
+            # CMD = [ CONNECT 0x01, BIND 0x02, UDP ASSOCIATE 0x03 ], RSV = 0x0
+            # ATYP = [ IPv4 address: 0x01,
+            #          DOMAINNAME: 0x03, IPv6 address: 0x04 ]
             # DST.ADDR = Variable, DST.PORT = 0x0000 (2 bytes)
             dst_addr = bytearray(idhash.digest())
-            msg = bytearray([0x05, 0x01, 0x00, 0x03, len(dst_addr)]) + dst_addr + bytearray([0x0,0x0])
+            msg = bytearray([0x05, 0x01, 0x00, 0x03, len(dst_addr)]) \
+                + dst_addr + bytearray([0x0,0x0])
             sock.send(msg)
             fd, fpath = tempfile.mkstemp()
             f = os.fdopen(fd, "w")
-            self.logger.debug('Writing to "%s"'% fpath)
+            self.logger.debug(f'Writing to "{fpath}"')
             bytesread = 0
             filesize = int(self.filesize)
             read_reply = True
             reply = ''
             # SOCKS5 reply: VER, REP, RSV, ATYP, BND.ADDR, BND.PORT
-            # VER = 0x05, REP = [ 0x0 succeeded, 0x1 general SOCKS server failure, 0x2 connection not allowed by ruleset,
-            #   0x3 Network unreachable, 0x4 Host unreachable, 0x5 Connection refused, 0x6 TTL expired, 0x7 Command not supported
-            #   0x8 Address type not supported, 0x9 to X'FF' unassigned ], RSV = 0x0,
-            # ATYP = [ IPv4 address: 0x01, DOMAINNAME: 0x03, IPv6 address: 0x04 ],
+            # VER = 0x05,
+            # REP = [ 0x0 succeeded,
+            #         0x1 general SOCKS server failure,
+            #         0x2 connection not allowed by ruleset,
+            #         0x3 Network unreachable,
+            #         0x4 Host unreachable,
+            #         0x5 Connection refused,
+            #         0x6 TTL expired,
+            #         0x7 Command not supported
+            #         0x8 Address type not supported,
+            #         0x9 to X'FF' unassigned ], RSV = 0x0,
+            # ATYP = [ IPv4 address: 0x01,
+            #          DOMAINNAME: 0x03,
+            #          IPv6 address: 0x04 ],
             # BND.ADDR = Variable, BND.PORT = 2 bytes
             while bytesread < filesize:
                 chunk = sock.recv(2048)
@@ -168,11 +178,16 @@ class Transfer_SOCKS5(Transfer):
                     break
                 if read_reply:
                     if len(chunk) < 7:
-                        self.logger.error("Could not parse SOCKS5 message, chunk too short")
+                        self.logger.error(
+                            "Could not parse SOCKS5 message, chunk too short"
+                        )
                         return False
                     pos = 0
-                    if ord(chunk[pos]) != 0x5 or ord(chunk[pos+1]) != 0x0 or ord(chunk[pos+2]) != 0x0:
-                        self.logger.error("Connection with SOCKS5 server failed")
+                    if ord(chunk[pos]) != 0x5 or ord(chunk[pos+1]) != 0x0 \
+                       or ord(chunk[pos+2]) != 0x0:
+                        self.logger.error(
+                            "Connection with SOCKS5 server failed"
+                        )
                         return False
                     pos+=3
                     addr_type = ord(chunk[pos])
@@ -196,17 +211,17 @@ class Transfer_SOCKS5(Transfer):
                     read_reply = False
                 f.write(chunk)
                 bytesread += len(chunk)
-                #self.logger.debug('read %d/%d bytes' % (bytesread,filesize))
-            self.logger.debug( "Reply: read %d/%d bytes" % (bytesread,filesize))
-            self.logger.debug( "SOCKS5 reply: %s" %repr(reply))
+                #self.logger.debug(f'read {bytesread}/{filesize} bytes')
+            self.logger.debug(f"Reply: read {bytesread}/{filesize} bytes")
+            self.logger.debug(f"SOCKS5 reply: {repr(reply)}")
             f.close()
             destfile = os.path.join(downloaddir,os.path.basename(self.filename))
-            self.logger.info("Download complete: %s", destfile)
+            self.logger.info(f"Download complete: {destfile}")
             shutil.copyfile(fpath,destfile)
             os.remove(fpath)
             return True
         except socket.error as e:
-            self.logger.debug("%s" % str(e))
+            self.logger.debug(f"{e}")
         return False
 
 # out-of-band data transfer
@@ -233,10 +248,12 @@ class Transfer_OOB(Transfer):
             self._send_iq_oob_failure(clientsocket,406)
         
     def _get_file_oob(self, downloaddir):
-        self.logger.debug('retrieving file %s, size %s bytes' %(self.filename, self.filesize))
+        self.logger.debug(
+            f'retrieving file {self.filename}, size {self.filesize} bytes'
+        )
         fd, fpath = tempfile.mkstemp()
         f = os.fdopen(fd, "wb")
-        self.logger.debug('Writing to "%s"'% fpath)
+        self.logger.debug(f'Writing to "{fpath}"')
         bytesread = 0
         filesize = int(self.filesize)
         try:
@@ -247,10 +264,10 @@ class Transfer_OOB(Transfer):
                     break
                 f.write(chunk)
                 bytesread += len(chunk)
-                #self.logger.debug('read %d/%d bytes' % (bytesread,filesize))
+                #self.logger.debug(f"read {bytesread}/{filesize} bytes")
         except:
             raise
-        self.logger.debug( "read %d/%d bytes" % (bytesread,filesize))
+        self.logger.debug(f"read {bytesread}/{filesize} bytes")
         f.close()
         destfile = os.path.join(downloaddir,os.path.basename(self.filename))
         shutil.copyfile(fpath,destfile)
@@ -258,35 +275,22 @@ class Transfer_OOB(Transfer):
         return True
 
     def _send_iq_oob_success(self, cs):
-        msg = ' '.join([
-                "<iq type='result'",
-                "from='%s'" % self.identity,
-                "to='%s'"   % self.other,
-                "id='%s'/>" % self.iq_id
-                ])
+        msg = f"<iq type='result' from='{self.identity}' to='{self.other}'"
+        " id='{self.iq_id}'/>"
         cs.send(msg)
     
     def _send_iq_oob_failure(self,cs,errorcode):
-        msg = ' '.join([
-                "<iq type='error'",
-                "from='%s'" % self.identity,
-                "to='%s'"   % self.other,
-                "id='%s'/>" % self.iq_id
-                ])
-        msg += "<query xmlns='jabber:iq:oob'>"
-        msg += "<url>%s</url>" % self.filename
-        msg += "</query>"
-        if errorcode == 404:
-            msg += "<error code='404' type='cancel'>"
-            msg += "<item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
-            msg += "</error>"
-        elif errorcode == 406:
-            msg += "<error code='406' type='modify'>"
-            msg += "<not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
-            msg += "</error>"
+        if errorcode == 406:
+            errortype = 'modify'
+            tag = 'not-acceptable'
         else:
-            msg += "<error code='404' type='cancel'>"
-            msg += "<item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
-            msg += "</error>"
-        msg += "</iq>"
+            errorcode = 404
+            errortype = 'cancel'
+            tag = 'item-not-found'
+        
+        msg = f"<iq type='error' from='{self.identity}' to='{self.other}'"
+        " id='{self.iq_id}'/><query xmlns='jabber:iq:oob'>"
+        "<url>{self.filename}</url></query>"
+        "<error code='{errorcode}' type='{errortype}'>"
+        "<{tag} xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>"
         cs.send(msg)

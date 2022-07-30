@@ -42,40 +42,61 @@ class ClientThread(threading.Thread):
     def send_ascii(self,ascii):
         asciitext = html.escape(ascii.strip())
         htmltext = re.sub(r'\n', r'<br/>', asciitext)
-        message = Message(html=htmltext, ascii=asciitext, identity=self.identity, other=self.other)
+        message = Message(
+            html=htmltext,
+            ascii=asciitext,
+            identity=self.identity,
+            other=self.other
+        )
         self.send_message(message)
 
     def send_html(self,html):
-        message = Message(html=html, ascii=None, identity=self.identity, other=self.other)
+        message = Message(
+            html=html,
+            ascii=None,
+            identity=self.identity,
+            other=self.other
+        )
         self.send_message(message)
 
     def is_empty_message(self,message):
         ascii = message.ascii.strip()
-        html  = ''.join(xml.etree.ElementTree.fromstring('<p>%s</p>' % message.html).itertext()).strip()
+        html  = ''.join(
+            xml.etree.ElementTree.fromstring(
+                f'<p>{message.html}</p>'
+            ).itertext()
+        ).strip()
         if len(ascii) or len(html):
             return False
         return True
 
     def send_message(self,message):
         if message.identity != self.identity:
-            self.logger.warning('Message identities do not match: message "%s", client "%s"' % (message.identity,self.identity))
+            self.logger.warning(
+                f'Message identities do not match:'
+                ' message "{message.identity}", client "{self.identity}"'
+            )
         if message.other != self.other:
-            self.logger.warning('Message recipients do not match: message "%s", client "%s"' % (message.other,self.other))
+            self.logger.warning(
+                f'Message recipients do not match:'
+                ' message "{message.other}", client "{self.other}"'
+            )
         if not message.ascii:
             message.ascii = re.sub(r'<br/?>', '\n', message.html)
-            message.ascii = ''.join(xml.etree.ElementTree.fromstring('<p>%s</p>' % message.ascii).itertext())
-        message.ascii = message.ascii.strip()
+            message.ascii = ''.join(
+                xml.etree.ElementTree.fromstring(
+                    f'<p>{message.ascii}</p>'
+                ).itertext()
+            ).strip()
         if len(message.ascii):
             message.ascii = html.escape(message.ascii)
             message.ascii = '\n' + message.ascii
-        msg = [
-            "<message",
-            "from='%s'" % self.identity,
-            "to='%s'"   % self.other,
-            "type='chat'><body>%s</body><html xmlns='http://www.w3.org/1999/xhtml'><body>%s</body></html></message>" % (message.ascii,message.html)
-            ]
-        line = ' '.join(msg)
-        self.cs.send_line( line)
+        line = f"<message from='{self.identity}' to='{self.other}' type='chat'>"
+        "<body>{message.ascii}</body>"
+        "<html xmlns='http://www.w3.org/1999/xhtml'>"
+        "<body>{message.html}</body>"
+        "</html></message>"
+        self.cs.send_line(line)
 
     def echo(self, message):
         identity = message.identity
@@ -85,17 +106,15 @@ class ClientThread(threading.Thread):
         self.send_message(message)
         
     def help(self):
-        self.send_html('<br/>'.join([
-                    self._command_text()
-                    ]))
+        self.send_html('<br/>'.join([self._command_text()]))
 
     def vars(self):
-        self.send_html('<br/>'.join([
-                    self._var_text()
-                    ]))
+        self.send_html('<br/>'.join([self._var_text()]))
 
     def hello(self):
-        self.send_html('Welcome at <b>%s</b><br/>%s' % (self.identity,self._command_text()))
+        self.send_html(
+            f'Welcome at <b>{self.identity}</b><br/>{self._command_text()}'
+        )
 
     def ls_downloaddir(self):
         d = self.downloaddir
@@ -106,16 +125,16 @@ class ClientThread(threading.Thread):
             self.send_html('Download directory does not exist')
             return
         fill = ' '*4
-        msg = 'Contents of <b>%s</b><br/>' % d 
+        msg = f'Contents of <b>{d}</b><br/>'
         entries = os.listdir(d)
         for entry in entries:
             stat = os.stat(os.path.join(d,entry))
             printname = entry
             if os.path.isdir(entry):
-                printname = '[%s]' % printname
+                printname = f'[{printname}]'
             elif os.path.isfile(entry):
-                printname = '%s' % printname
-            msg += fill + ("%s\n" % printname)
+                printname = str(printname)
+            msg += fill + (f"{printname}\n")
         if not len(entries):
             msg += 'No files found'
 
@@ -139,41 +158,38 @@ class ClientThread(threading.Thread):
                 func=staticmethod(lambda client, message: client.vars()),
                 helptext="print variables"),
             'ls': self.make_command(
-                func=staticmethod(lambda client, message: client.ls_downloaddir()),
+                func=staticmethod(lambda client, message:
+                                  client.ls_downloaddir()),
                 helptext="list contents of download directory"),
             }
     
     def _command_text(self):
         ret = '<b>commands:</b><br/>'
         for k, v in sorted(self.commands.items()):
-            ret += '  %s - %s<br/>'% (k, v.help)
+            ret += f'  {k} - {v.help}<br/>'
         return ret
 
     def _var_text(self):
         ret = '<b>variables:</b><br/>'
-        ret += '  identity - %s<br/>'   % str(self.identity)
-        ret += '  other - %s<br/>'      % str(self.other)
-        ret += '  downloaddir - %s<br/>'% str(self.downloaddir)
+        ret += f'  identity - {self.identity}<br/>'
+        ret += f'  other - {self.other}<br/>'
+        ret += f'  downloaddir - {self.downloaddir}<br/>'
         return ret
         
     def _send_si_result(self, iq_id):
-        line = ''.join([
-                "<iq type='result' from='%s' to='%s' id='%s'>" %(self.identity,self.other,iq_id),
-                "<si xmlns='http://jabber.org/protocol/si'>",
-                "<feature xmlns='%s'>" % Protocol.FEATURE_NEG,
-                "<x xmlns='jabber:x:data' type='submit'>",
-                "<field var='stream-method'>",
-                "<value>%s</value>" % Protocol.BYTESTREAMS,
-                "</field>",
-                "</x>",
-                    "</feature>",
-                "</si>",
-                "</iq>",
-                ])
+        line = f"<iq type='result' from='{self.identity}' to='{self.other}'"
+        " id='{ip_id}'>"
+        "<si xmlns='http://jabber.org/protocol/si'>"
+        "<feature xmlns='{Protocol.FEATURE_NEG}'>"
+        "<x xmlns='jabber:x:data' type='submit'>"
+        "<field var='stream-method'>"
+        "<value>{Protocol.BYTESTREAMS}</value>"
+        "</field></x></feature></si></iq>"
         self.cs.send_line(line)
 
     # handlers for parser results
     def handle_message(self, message):
+        self.logger.debug("Entering client.handle_message")
         if self.is_empty_message(message):
             return
         
@@ -193,46 +209,54 @@ class ClientThread(threading.Thread):
                 self.broadcast_func(self,message)
 
     def handle_transfer(self, transfer):
+        self.logger.debug("Entering client.handle_transfer")
         if not self.downloaddir:
-            self.logger.info("Rejecting file transfer, download directory not set")
+            self.logger.info(
+                "Rejecting file transfer, download directory not set"
+            )
             transfer.reject(self.cs)
             return
         status = transfer.retrieve(self.cs, self.downloaddir)
 
     def handle_stream_open(self,stream):
+        self.logger.debug("Entering client.handle_stream_open")
         if self.stream_is_open:
             self.logger.error('Stream already open')
             return
         if not self.identity:
             self.identity == stream.identity
         elif self.identity != stream.identity:
-            self.logger.error('Identity different from received one: self "%s", remote "%s"' % (self.identity, stream.identity))
+            self.logger.error(
+                f'Identity different from received one: self "{self.identity}",'
+                ' remote "{stream.identity}"'
+            )
 
         if not self.other:
             self.other = stream.other
         elif self.other != stream.other:
-            self.logger.error('Other different from received one: self "%s", remote "%s"' %(self.other,stream.other))
+            self.logger.error(
+                f'Other different from received one: self "{self.other}",'
+                ' remote "{stream.other}"'
+            )
              
-        line =' '.join([
-                "<stream:stream xmlns='jabber:client'",
-                "xmlns:stream='http://etherx.jabber.org/streams'",
-                "from='%s'" % self.identity,
-                "to='%s'"   % self.other,
-                "version='1.0'>",
-                ])
+        line = f"<stream:stream xmlns='jabber:client'"
+        " xmlns:stream='http://etherx.jabber.org/streams'"
+        " from='{self.identity}' to='{self.other}' version='1.0'>"
         
         self.cs.send_line(line)
         self.stream_is_open = True
 
     def handle_feature_neg(self, fn):
+        self.logger.debug("Entering client.handle_feature_neg")
         for v in fn.option_values:
             if v == Protocol.BYTESTREAMS:
                 self._send_si_result(fn.iq_id)
                 break
             else:
-                self.logger.warning('Unhandled option value "%s"' % v)
+                self.logger.warning(f'Unhandled option value "{v}"')
 
     def close_stream(self):
+        self.logger.debug("Entering client.close_stream")
         if not self.stream_is_open:
             self.logger.error("Stream is not open, not closing")
             return
@@ -241,12 +265,13 @@ class ClientThread(threading.Thread):
 
     # Functions related to threading/event loop
     def process_result(self, result):
+        self.logger.debug("Entering client.process_result")
         if result.type   == ResultType.STREAM_OPEN:
             self.logger.debug("Handling stream open")
             self.handle_stream_open(result.data)
         elif result.type == ResultType.STREAM_CLOSE:
             self.logger.debug("Handling stream close")
-            self.close_stream()
+            self.stop()
         elif result.type   == ResultType.MESSAGE:
             self.logger.debug("Handling message")
             self.handle_message(result.data)
@@ -271,14 +296,14 @@ class ClientThread(threading.Thread):
             while self.parser.process(chunk):
                 chunk = self.cs.recv()
         except socket.timeout as e:
-            #self.logger.debug('socket.timeout %s' % str(e))
             return False
         except socket.error as e:
-            self.logger.debug('socket.error %s' % str(e))
+            self.logger.debug(f'socket.error {str(e)}')
             return False
         return True
 
     def run(self):
+        self.logger.debug("Entering client.run")
         try:
             while not self.stopped.is_set():
                 self.receive()
@@ -292,5 +317,6 @@ class ClientThread(threading.Thread):
             self.cleanup_func(self)
 
     def stop(self):
+        self.logger.debug("Entering client.stop")
         self.stopped.set()
 

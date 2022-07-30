@@ -16,7 +16,7 @@ def _main(name, daemon, loglevel, client_args):
     logFormatter = logging.Formatter(
         "%(asctime)s [%(levelname)-5.5s] [%(threadName)s] %(message)s"
     )
-    logger.setLevel( loglevel)
+    logger.setLevel(loglevel)
     
     if not daemon:
         # logging to console
@@ -40,13 +40,13 @@ def _main(name, daemon, loglevel, client_args):
 
 def main(name, client_args={}):
     parser = argparse.ArgumentParser(description=name)
-    parser.add_argument( '-d', '--daemon',  action="store_true",
+    parser.add_argument('-d', '--daemon',  action="store_true",
                          help='run as daemon')
-    parser.add_argument( '-k', '--kill',  action="store_true",
+    parser.add_argument('-k', '--kill',  action="store_true",
                          help='kill running instance if any before start')
-    parser.add_argument( '-f', '--force', action="store_true",
+    parser.add_argument('-f', '--force', action="store_true",
                          help='force start on bogus lockfile')
-    parser.add_argument( '-v', '--verbose', action="store_true",
+    parser.add_argument('-v', '--verbose', action="store_true",
                          help='')
     args = parser.parse_args()
     
@@ -56,9 +56,9 @@ def main(name, client_args={}):
         loglevel = logging.INFO
 
     if os.geteuid() == 0:
-        lock = '/var/run/%s' % name
+        lock = f'/var/run/{name}'
     else:
-        lock = os.path.join(os.environ['HOME'],'.%s' % name)
+        lock = os.path.join(os.environ['HOME'],f'.{name}')
 
     pid = -1
     if os.path.exists(lock+'.lock'):
