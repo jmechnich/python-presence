@@ -74,12 +74,12 @@ class ClientThread(threading.Thread):
         if message.identity != self.identity:
             self.logger.warning(
                 f'Message identities do not match:'
-                ' message "{message.identity}", client "{self.identity}"'
+                f' message "{message.identity}", client "{self.identity}"'
             )
         if message.other != self.other:
             self.logger.warning(
                 f'Message recipients do not match:'
-                ' message "{message.other}", client "{self.other}"'
+                f' message "{message.other}", client "{self.other}"'
             )
         if not message.ascii:
             message.ascii = re.sub(r'<br/?>', '\n', message.html)
@@ -93,10 +93,10 @@ class ClientThread(threading.Thread):
             message.ascii = '\n' + message.ascii
         self.cs.send_line(
             f"<message from='{self.identity}' to='{self.other}' type='chat'>"
-            "<body>{message.ascii}</body>"
-            "<html xmlns='http://www.w3.org/1999/xhtml'>"
-            "<body>{message.html}</body>"
-            "</html></message>"
+            f"<body>{message.ascii}</body>"
+            f"<html xmlns='http://www.w3.org/1999/xhtml'>"
+            f"<body>{message.html}</body>"
+            f"</html></message>"
         )
 
     def echo(self, message):
@@ -171,22 +171,22 @@ class ClientThread(threading.Thread):
         return ret
 
     def _var_text(self):
-        return (f'<b>variables:</b><br/>'
-                '  identity - {self.identity}<br/>'
-                '  other - {self.other}<br/>'
-                '  downloaddir - {self.downloaddir}<br/>')
+        return ('<b>variables:</b><br/>'
+                f'  identity - {self.identity}<br/>'
+                f'  other - {self.other}<br/>'
+                f'  downloaddir - {self.downloaddir}<br/>')
         return ret
         
     def _send_si_result(self, iq_id):
         self.cs.send_line(
             f"<iq type='result' from='{self.identity}' to='{self.other}'"
-            " id='{ip_id}'>"
-            "<si xmlns='http://jabber.org/protocol/si'>"
-            "<feature xmlns='{Protocol.FEATURE_NEG}'>"
-            "<x xmlns='jabber:x:data' type='submit'>"
-            "<field var='stream-method'>"
-            "<value>{Protocol.BYTESTREAMS}</value>"
-            "</field></x></feature></si></iq>"
+            f" id='{ip_id}'>"
+            f"<si xmlns='http://jabber.org/protocol/si'>"
+            f"<feature xmlns='{Protocol.FEATURE_NEG}'>"
+            f"<x xmlns='jabber:x:data' type='submit'>"
+            f"<field var='stream-method'>"
+            f"<value>{Protocol.BYTESTREAMS}</value>"
+            f"</field></x></feature></si></iq>"
         )
 
     # handlers for parser results
@@ -230,7 +230,7 @@ class ClientThread(threading.Thread):
         elif self.identity != stream.identity:
             self.logger.error(
                 f'Identity different from received one: self "{self.identity}",'
-                ' remote "{stream.identity}"'
+                f' remote "{stream.identity}"'
             )
 
         if not self.other:
@@ -238,13 +238,13 @@ class ClientThread(threading.Thread):
         elif self.other != stream.other:
             self.logger.error(
                 f'Other different from received one: self "{self.other}",'
-                ' remote "{stream.other}"'
+                f' remote "{stream.other}"'
             )
              
         self.cs.send_line(
             f"<stream:stream xmlns='jabber:client'"
-            " xmlns:stream='http://etherx.jabber.org/streams'"
-            " from='{self.identity}' to='{self.other}' version='1.0'>"
+            f" xmlns:stream='http://etherx.jabber.org/streams'"
+            f" from='{self.identity}' to='{self.other}' version='1.0'>"
         )
         self.stream_is_open = True
 

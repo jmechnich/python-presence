@@ -114,9 +114,9 @@ class Transfer_SOCKS5(Transfer):
     def reject(self, cs):
         cs.send_line(
             f"<iq from='{self.identity}' id='{self.iq_id}' to='{self.other}'"
-            " type='error'><error type='modify'>"
-            "<not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
-            "</error></iq>"
+            f" type='error'><error type='modify'>"
+            f"<not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
+            f"</error></iq>"
         )
 
     def _get_file_socks5(self, streamhost, downloaddir):
@@ -278,7 +278,7 @@ class Transfer_OOB(Transfer):
     def _send_iq_oob_success(self, cs):
         cs.send(
             f"<iq type='result' from='{self.identity}' to='{self.other}'"
-            " id='{self.iq_id}'/>"
+            f" id='{self.iq_id}'/>"
         )
     
     def _send_iq_oob_failure(self,cs,errorcode):
@@ -292,8 +292,8 @@ class Transfer_OOB(Transfer):
         
         cs.send(
             f"<iq type='error' from='{self.identity}' to='{self.other}'"
-            " id='{self.iq_id}'/><query xmlns='jabber:iq:oob'>"
-            "<url>{self.filename}</url></query>"
-            "<error code='{errorcode}' type='{errortype}'>"
-            "<{tag} xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>"
+            f" id='{self.iq_id}'/><query xmlns='jabber:iq:oob'>"
+            f"<url>{self.filename}</url></query>"
+            f"<error code='{errorcode}' type='{errortype}'>"
+            f"<{tag} xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error></iq>"
         )
