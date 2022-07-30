@@ -3,16 +3,19 @@
 [![PyPI license](https://img.shields.io/pypi/l/python-presence)](https://pypi.org/project/python-presence/)
 [![PyPi weekly downloads](https://img.shields.io/pypi/dw/python-presence)](https://pypi.org/project/python-presence/)
 
-## python-presence - a minimal implementation of a serverless XMPP client.
+## python-presence
+
+A minimal implementation of a serverless XMPP client.
 
 ### Installation
 
-  * Clone this repository
-  * Run `pip3 install .`
+  * Clone this repository and run `pip install .` OR
+  * Install from PyPi: `pip install python-presence`
 
 ### Usage (example client)
 
-There is a minimal python script called `python-presence` for running a service:
+There is a minimal python script called `python-presence` for running
+a service:
 
 ```
 usage: python-presence [-h] [-d] [-k] [-f] [-v]
@@ -29,7 +32,8 @@ optional arguments:
 
 ### Default client commands
 
-The client currently supports the following built-in trigger commands/keywords:
+The client currently supports the following built-in trigger
+commands/keywords:
 
 | Commmand | Description                         |
 |----------|-------------------------------------|
@@ -41,7 +45,8 @@ The client currently supports the following built-in trigger commands/keywords:
 
 ### Extending the client with custom commands
 
-A simple application of client commands is remote query of system information.
+A simple application of client commands is remote query of system
+information.
 
 ```python
     import subprocess
@@ -63,8 +68,13 @@ A simple application of client commands is remote query of system information.
     }
 ```
 
-### Dependencies
+### System integration
 
-- `python3-daemon`
-- `python3-lockfile`
-- `python3-psutil`
+`misc/presence.service` is a template file for configuring an Avahi
+service. After copying to `/etc/avahi/services` the service
+advertisement should immediately show up in clients on the same subnet.
+
+`misc/python-presence.service` is a systemd service than can be used
+as-is after copying to `/etc/systemd/system`.
+
+The files are also available in the data folder of the PyPi package.
